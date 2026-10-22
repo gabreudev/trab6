@@ -13,6 +13,7 @@ import subprocess
 import threading
 import pandas as pd
 import numpy as np
+import requests
 from datetime import datetime
 
 # Definicoes dos perfis e cenarios
@@ -273,6 +274,20 @@ def aggregate_results(raw_executions_csv, results_dir):
     return agg_summary, op_summary
 
 
+def check_services_health(host):
+    """Verifica se o API Gateway e os servicos estao saudaveis antes de iniciar a execucao."""
+    for attempt in range(12):
+        try:
+            r = requests.get(f"{host}/api/vet/vets", timeout=5)
+            if r.status_code == 200:
+                return True
+        except Exception:
+            pass
+        print(f"[!] Aguardando microsservicos responderem em {host} (tentativa {attempt+1}/12)...")
+        time.sleep(5)
+    return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Executor de Testes de Carga com Locust")
     parser.add_argument("--scenarios", nargs="+", default=["A", "B", "C"], choices=["A", "B", "C"], help="Cenarios a executar")
@@ -282,12 +297,15 @@ def main():
     parser.add_argument("--warmup", type=int, default=None, help="Tempo de aquecimento em segundos (padrao: 60s)")
     parser.add_argument("--host", default="http://localhost:8080", help="Host da aplicacao (API Gateway)")
     parser.add_argument("--quick", action="store_true", help="Modo rapido de teste de calibracao (30s teste, 10s warmup, 1 repeticao)")
+    parser.add_argument("--clean", action="store_true", help="Limpa resultados anteriores antes de iniciar")
     args = parser.parse_args()
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     results_dir = os.path.join(base_dir, "results")
     raw_csv = os.path.join(results_dir, "raw_executions.csv")
+    raw_dir = os.path.join(results_dir, "raw")
     os.makedirs(results_dir, exist_ok=True)
+    os.makedirs(raw_dir, exist_ok=True)
 
     if args.quick:
         print("[MODO QUICK ATIVADO] Executando calibracao rapida: 30s teste, 10s warmup, 1 repeticao")
@@ -298,6 +316,16 @@ def main():
         duration = args.duration if args.duration else 360
         warmup = args.warmup if args.warmup else 60
         repetitions = args.repetitions
+
+    # Limpeza se solicitada
+    if args.clean and os.path.exists(raw_csv):
+        print("[LIMPEZA] Removendo execucoes anteriores para iniciar bateria limpa...")
+        os.remove(raw_csv)
+        for f in os.listdir(raw_dir):
+            try:
+                os.remove(os.path.join(raw_dir, f))
+            except Exception:
+                pass
 
     # Carrega execucoes existentes se o arquivo ja existir
     existing_records = []
@@ -310,17 +338,42 @@ def main():
     all_records = list(existing_records)
 
     total_runs = len(args.scenarios) * len(args.profiles) * repetitions
-    current_run = 0
+    current_run = len(all_records)
+    runs_to_do = total_runs - current_run
 
-    print(f"Iniciando bateria de experimentos: Total de {total_runs} execucoes planejadas.")
-    print(f"Perfis: {args.profiles} | Cenarios: {args.scenarios} | Repeticoes: {repetitions}")
+    print("=" * 70)
+    print(f"Bateria de Experimentos Oficial: Total de {total_runs} execuções.")
+    print(f"Já concluídas: {current_run} | Restantes: {runs_to_do}")
+    print(f"Perfis: {args.profiles} | Cenários: {args.scenarios} | Repetições: {repetitions}")
+    print(f"Duração por teste: {duration}s ({duration/60:.1f} min) | Aquecimento: {warmup}s ({warmup/60:.1f} min)")
+    est_total_min = (runs_to_do * (duration + 10)) // 60
+    print(f"Tempo total estimado restante: ~{est_total_min} minutos (~{est_total_min/60:.1f} horas)")
+    print("=" * 70)
 
     for sc_id in args.scenarios:
         for prof_key in args.profiles:
             for rep in range(1, repetitions + 1):
+                # Verifica se este cenario/perfil/rep ja foi executado
+                already_done = any(
+                    r.get("scenario") == sc_id and
+                    r.get("profile") == prof_key and
+                    int(r.get("repetition", -1)) == rep and
+                    int(r.get("duration_s", 0)) == duration
+                    for r in all_records
+                )
+                if already_done:
+                    print(f"[SKIP] Cenario {sc_id} | Perfil {prof_key} | Rep {rep} ja executado anteriormente.")
+                    continue
+
                 current_run += 1
-                print(f"\n>>> Progresso geral: {current_run}/{total_runs} ({(current_run/total_runs)*100:.1f}%)")
-                
+                rem_runs = total_runs - current_run
+                eta_min = (rem_runs * (duration + 10)) // 60
+                print(f"\n>>> Progresso geral: {current_run}/{total_runs} ({(current_run/total_runs)*100:.1f}%) | ETA restante: ~{eta_min} min")
+
+                # Verifica saude dos servicos
+                if not check_services_health(args.host):
+                    print("[ALERTA] Servicos nao estao respondendo! Tentando prosseguir...")
+
                 res = run_single_execution(
                     scenario_id=sc_id,
                     profile_key=prof_key,
@@ -335,10 +388,10 @@ def main():
                     # Salva imediatamente para evitar perda de dados
                     pd.DataFrame(all_records).to_csv(raw_csv, index=False)
 
-                # Pequeno intervalo de resfriamento entre execucoes
+                # Intervalo de resfriamento entre execucoes
                 if current_run < total_runs:
-                    print("Pausa de 5s para estabilizacao dos microsservicos...")
-                    time.sleep(5)
+                    print("Pausa de 10s para estabilizacao dos microsservicos e garbage collection...")
+                    time.sleep(10)
 
     print("\n" + "=" * 70)
     print("Todas as execucoes foram concluidas com sucesso!")
