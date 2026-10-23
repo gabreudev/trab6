@@ -18,3 +18,7 @@ petclinic-repo/
 # OS
 .DS_Store
 Thumbs.db
+
+# Midia e relatorios compilados
+*.mp4
+*.pdf
