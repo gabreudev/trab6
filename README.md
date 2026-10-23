@@ -173,18 +173,18 @@ Executa os 6 cenários com duração oficial de 6 minutos e 1 minuto de aquecime
 
 ### 6.1. Tabela Resumo: Métricas Obrigatórias
 
-A tabela abaixo resume os resultados consolidados obtidos nas execuções após o descarte do período de aquecimento:
+A tabela abaixo resume os resultados consolidados obtidos nas **60 execuções oficiais (10 repetições por configuração)** após o descarte do período de aquecimento:
 
 | Cenário | Perfil | Usuários | Média RT (ms) | P95 RT (ms) | Vazão (req/s) | Total Reqs | Falhas (%) | CPU Gateway | CPU Customers | CPU Vets |
 |:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Cenário A (Leve)** | **Perfil Leitura** | 30 | 16.15 ms | 35.00 ms | 137.99 req/s | 2.626 | 0.00% | 111.3% | 197.4% | 48.3% |
-| **Cenário A (Leve)** | **Perfil Escrita** | 30 | 50.76 ms | 250.00 ms | 120.08 req/s | 2.276 | 0.00% | 88.6% | 365.2% | 33.6% |
-| **Cenário B (Moderado)** | **Perfil Leitura** | 80 | 1.475.82 ms | 2.200.00 ms | 48.59 req/s | 925 | 0.00% | 29.2% | 450.8% | 3.5% |
-| **Cenário B (Moderado)** | **Perfil Escrita** | 80 | 910.62 ms | 1.900.00 ms | 71.34 req/s | 1.356 | 0.00% | 35.7% | 430.8% | 4.9% |
-| **Cenário C (Elevado)** | **Perfil Leitura** | 150 | 449.33 ms* | 23.00 ms* | 266.44 req/s* | 5.070 | **98.68%** | 91.0% | 193.6% | 1.3% |
-| **Cenário C (Elevado)** | **Perfil Escrita** | 150 | 8.12 ms* | 18.00 ms* | 716.96 req/s* | 13.659 | **100.00%** | 108.0% | 0.1% | 0.1% |
+| **Cenário A (Leve)** | **Perfil Escrita** | 30 | 538.67 ± 1273.28 | 1004.00 ± 3160.87 | 83.42 ± 30.69 | 24.982 | 89.89% | 11.1% | 146.7% | 0.3% |
+| **Cenário A (Leve)** | **Perfil Leitura** | 30 | 1496.63 ± 1488.00 | 3892.00 ± 3732.94 | 35.80 ± 26.96 | 10.716 | 56.29% | 7.9% | 170.5% | 0.6% |
+| **Cenário B (Moderado)** | **Perfil Escrita** | 80 | 38.86 ± 1.50 | 4.90 ± 0.32 | 333.70 ± 1.85 | 99.913 | 99.71% | 40.3% | 153.8% | 0.2% |
+| **Cenário B (Moderado)** | **Perfil Leitura** | 80 | 42.33 ± 8.08 | 4.90 ± 0.32 | 329.56 ± 11.25 | 98.694 | 99.86% | 42.0% | 159.7% | 0.2% |
+| **Cenário C (Elevado)** | **Perfil Escrita** | 150 | 43.86 ± 31.12 | 14.80 ± 5.35 | 618.83 ± 63.10 | 184.276 | 99.62% | 80.0% | 126.4% | 0.5% |
+| **Cenário C (Elevado)** | **Perfil Leitura** | 150 | 18.70 ± 3.79 | 8.90 ± 1.66 | 683.18 ± 11.71 | 203.889 | 99.95% | 84.0% | 130.0% | 0.1% |
 
-*\* Nota analítica sobre o Cenário C:* No patamar de 150 usuários, os circuitos de proteção do Spring Cloud Gateway (`CircuitBreaker` / `defaultCircuitBreaker`) foram desarmados devido ao esgotamento das conexões upstream, fazendo com que o Gateway rejeitasse ou respondesse quase imediatamente com fallback / erro 503 (fast-failure), resultando em taxa de falhas próxima de 100% e tempo de resposta artificialmente baixo para respostas de erro rápidas.
+> **Nota analítica sobre os Cenários B e C:** Sob concorrência moderada e elevada (80 e 150 usuários), o limite de conexões simultâneas do Spring Cloud Gateway com os serviços a jusante foi atingido e os Circuit Breakers foram desarmados. O Gateway passa a rejeitar quase imediatamente as requisições excedentes com erro HTTP 503 (*fast-failure*), resultando em taxa de falhas superior a 99% e tempo de resposta aparente artificialmente baixo (entre 18 ms e 43 ms) decorrente das respostas instantâneas de erro na borda.
 
 ---
 
@@ -192,12 +192,12 @@ A tabela abaixo resume os resultados consolidados obtidos nas execuções após 
 
 | Cenário | Perfil | GET /owners (Avg / P95) | GET /owners/{id} (Avg / P95) | GET /vets (Avg / P95) | POST /owners (Avg / P95) |
 |---|---|:---:|:---:|:---:|:---:|
-| **A (30 u)** | **Leitura** | 25.2 ms / 40.0 ms | 7.6 ms / 12.0 ms | 13.2 ms / 21.0 ms | 9.0 ms / 13.0 ms |
-| **A (30 u)** | **Escrita** | 171.6 ms / 420.0 ms | 24.0 ms / 83.0 ms | 9.1 ms / 16.0 ms | 23.1 ms / 85.0 ms |
-| **B (80 u)** | **Leitura** | 1.943.8 ms / 2.500.0 ms | 1.484.4 ms / 1.900.0 ms | **7.4 ms / 12.0 ms** | 1.500.7 ms / 1.700.0 ms |
-| **B (80 u)** | **Escrita** | 1.671.2 ms / 2.400.0 ms | 940.2 ms / 1.600.0 ms | **6.9 ms / 11.0 ms** | 948.7 ms / 1.600.0 ms |
-| **C (150 u)** | **Leitura** | 582.0 ms / 9.100.0 ms | 443.3 ms / 19.0 ms | 4.8 ms / 10.0 ms | 467.5 ms / 21.0 ms |
-| **C (150 u)** | **Escrita** | 8.2 ms / 18.0 ms (falhas) | 8.1 ms / 18.0 ms (falhas) | 8.0 ms / 17.0 ms (falhas) | 8.2 ms / 18.0 ms (falhas) |
+| **A (30 u)** | **Escrita** | 1185.0 ms / 2003.2 ms | 507.6 ms / 923.2 ms | **3.1 ms / 4.4 ms** | 518.3 ms / 893.2 ms |
+| **A (30 u)** | **Leitura** | 2299.7 ms / 4456.5 ms | 1179.2 ms / 2503.5 ms | **4.1 ms / 6.2 ms** | 1185.1 ms / 2880.9 ms |
+| **B (80 u)** | **Escrita** | 63.9 ms / 5.0 ms | 43.5 ms / 4.9 ms | **3.0 ms / 4.9 ms** | 41.9 ms / 5.0 ms |
+| **B (80 u)** | **Leitura** | 54.1 ms / 4.9 ms | 43.4 ms / 4.9 ms | **3.1 ms / 4.9 ms** | 46.6 ms / 4.8 ms |
+| **C (150 u)** | **Escrita** | 60.3 ms / 14.9 ms | 51.0 ms / 15.1 ms | **5.7 ms / 13.8 ms** | 51.0 ms / 14.9 ms |
+| **C (150 u)** | **Leitura** | 22.3 ms / 8.9 ms | 19.9 ms / 8.9 ms | **4.7 ms / 8.9 ms** | 19.6 ms / 8.9 ms |
 
 ---
 
@@ -226,43 +226,40 @@ A tabela abaixo resume os resultados consolidados obtidos nas execuções após 
 ## 7. Análise dos Resultados e Respostas às Questões
 
 ### 1. Como o aumento de usuários afeta o tempo de resposta?
-O aumento da concorrência de 30 para 80 usuários provocou um **crescimento exponencial na latência**:
-- No **Perfil de Leitura**, o tempo médio saltou de **16,15 ms** para **1.475,82 ms** (um aumento de **~91 vezes** ou +9.038%), com o P95 atingindo **2.200 ms**.
-- No **Perfil de Escrita**, o tempo médio subiu de **50,76 ms** para **910,62 ms** (+1.694%), com P95 atingindo **1.900 ms**.
-- **Causa arquitetural:** Esse comportamento é caracterizado pela saturação das threads de atendimento do container Tomcat interno do `customers-service` e contenção no pool de conexões do banco de dados relacional. As requisições passam a enfileirar nas camadas de rede do Gateway e nas filas TCP do kernel, gerando tempos de espera acentuados antes de serem processadas.
+O comportamento do tempo de resposta apresenta duas fases bem definidas:
+1. **Fase de Saturação e Enfileiramento (Cenário A - 30 usuários):** As requisições chegam aos microsserviços de negócio e sobrecarregam rapidamente o container Tomcat e o pool de conexões (HikariCP) do `customers-service`. Isso provoca latência elevada: média de **538.67 ms** no Perfil de Escrita e **1496.63 ms** no Perfil de Leitura, com P95 atingindo **3892.00 ms**.
+2. **Fase de Fast-Failure e Descarte (Cenários B e C - 80 e 150 usuários):** Ao elevar a concorrência para 80 e 150 usuários, os tempos de resposta despencam para a faixa de **18 ms a 43 ms**. Isso ocorre porque o Spring Cloud Gateway esgota seu pool de conexões upstream e abre os Circuit Breakers, rejeitando imediatamente as requisições excedentes na borda com erro HTTP 503. Como o Locust mede o tempo até o retorno do código de status, as falhas instantâneas puxam a média de latência para baixo.
 
 ---
 
 ### 2. Qual perfil apresenta maior vazão?
-- **Sob carga leve (Cenário A - 30 usuários):** O **Perfil 1 — Leitura** apresentou a maior vazão (**137,99 req/s** contra 120,08 req/s do Perfil de Escrita). Isso ocorre porque operações de leitura simples (`GET /owners/{id}` e `GET /vets`) possuem custo computacional inferior à persistência em disco.
-- **Sob carga moderada (Cenário B - 80 usuários):** O **Perfil 2 — Escrita** manteve vazão ligeiramente superior (**71,34 req/s** vs. **48,59 req/s** da leitura). A razão reside no fato de que o Perfil de Leitura concentra 45% de seu tráfego em `GET /owners`, que serializa coleções grandes e pesadas de entidades com pets associados, provocando maior congestionamento de memória e CPU que inserts pontuais indexados.
-- **Sob sobrecarga extrema (Cenário C):** A taxa de requisições por segundo se torna meramente aparente devido às respostas de fast-failure do Gateway (erros 503/fallback), resultando em vazão efetiva útil nula.
+- **Sob carga com processamento real (Cenário A - 30 usuários):** O **Perfil 2 — Escrita** apresentou maior vazão (**83.42 req/s** vs. **35.80 req/s** do Perfil de Leitura). Isso ocorre porque a rota `GET /owners` (que representa 45% do perfil de leitura) exige serializar em memória coleções grandes de entidades e pets, gerando mais contenção de I/O e CPU do que inserções pontuais indexadas.
+- **Sob saturação e rejeição de tráfego (Cenários B e C):** O **Perfil 1 — Leitura** registrou maior taxa de requisições por segundo (**329.56 req/s** no Cenário B e **683.18 req/s** no Cenário C). Contudo, essa vazão não representa trabalho útil computado (*goodput*), mas sim a taxa em que o Gateway consegue retornar respostas de erro via arquitetura não-bloqueante Netty.
 
 ---
 
 ### 3. Quais operações apresentam maior degradação?
 A operação com maior degradação absoluta e relativa foi o **`GET /owners`**:
-- No Perfil de Leitura, seu tempo de resposta médio aumentou de **25,2 ms** no Cenário A para impressionantes **1.943,8 ms** no Cenário B (degradação de **+7.613%**).
-- As operações `GET /owners/{id}` e `POST /owners` também sofreram degradação severa no Cenário B (~940 ms a ~1.500 ms).
-- **Contraste Fundamental (Isolamento de Microsserviços):** Em contrapartida, a operação **`GET /vets`** manteve-se absolutamente estável em **~7 ms a 13 ms** em todos os cenários sem apresentar degradação! Como os veterinários são gerenciados pelo microsserviço independente `vets-service` (que possui seu próprio processo e banco de dados isolado), a sobrecarga no `customers-service` não afetou a performance do `vets-service`. Isso comprova na prática o benefício do padrão arquitetural de isolamento de falhas e recursos em microsserviços.
+- No Cenário A (Leitura), sua latência média atingiu **2299.7 ms** com P95 de **4456.5 ms**, sendo o ponto mais crítico de toda a aplicação devido ao volume de dados trafegados.
+- As rotas `GET /owners/{id}` e `POST /owners` também sofreram degradação expressiva (~507 ms a ~1185 ms no Cenário A).
+- **Isolamento de Falhas Exemplar (`GET /vets`):** Em contrapartida, a operação `GET /vets` manteve-se **completamente imune à degradação**, registrando tempos de resposta estáveis entre **3.0 ms e 5.7 ms** em todos os cenários! Como o `vets-service` opera em container isolado com seu próprio banco de dados, o colapso do serviço de clientes não afetou o serviço de veterinários, comprovando o benefício do padrão arquitetural de isolamento em microsserviços.
 
 ---
 
 ### 4. Como o consumo de CPU varia entre os cenários?
-A monitoração contínua via `docker stats` revelou disparidades drásticas entre os microsserviços:
-- **`customers-service` (O Gargalo Central):** Teve o consumo mais elevado do sistema, consumindo **197,4%** no Cenário A (Leitura), **365,2%** no Cenário A (Escrita) e atingindo **450,8% de CPU** (mais de 4 núcleos totalmente saturados) no Cenário B. Trata-se do ponto único de congestionamento da aplicação.
-- **`api-gateway`:** Manteve utilização relativamente constante entre **88% e 111% de CPU**, atuando de maneira eficiente em I/O reativo não-bloqueante (Spring Cloud Gateway / WebFlux / Netty).
-- **`vets-service`:** Consumiu apenas **33% a 48%** em carga leve e menos de **5%** sob carga moderada e elevada, operando com ampla folga de recursos.
-- **Fenômeno no Cenário C (Escrita):** O consumo do `customers-service` caiu para **0,1%**, pois o API Gateway passou a interceptar e rejeitar o tráfego antes que as conexões chegassem ao serviço de clientes.
+A monitoração contínua via `docker stats` revelou papéis muito claros entre os serviços:
+- **`customers-service` (O Gargalo Central):** Apresentou o consumo mais elevado de todo o sistema, operando entre **126.4% e 170.5% de CPU** (saturando múltiplos núcleos). Ele é o ponto único de congestionamento da aplicação.
+- **`api-gateway` (Escalabilidade Reativa):** Apresentou crescimento de CPU proporcional ao volume de requisições: **~8% a 11%** no Cenário A, **~40% a 42%** no Cenário B e **~80% a 84%** no Cenário C. Ele gerencia eficientemente o descarte de conexões com baixo overhead.
+- **`vets-service` (Ociosidade Operacional):** Manteve consumo insignificante, sempre abaixo de **0.6% de CPU**, demonstrando que operou com total folga computacional.
 
 ---
 
 ### 5. Qual cenário apresenta maior taxa de falhas?
-O **Cenário C — Elevado (150 usuários)** apresentou a maior taxa de falhas:
-- **Perfil 1 (Leitura):** **98,68%** de taxa de falhas.
-- **Perfil 2 (Escrita):** **100,00%** de taxa de falhas.
-- Nos cenários A e B, a taxa de falhas foi de rigorosamente **0,00%**.
-- O colapso observado no Cenário C decorre do limite de conexões simultâneas do Gateway e do acionamento dos Circuit Breakers (`CircuitBreakerFilter` do Spring Cloud Gateway), que abrem o circuito para proteger os microsserviços a jusante de um travamento total do sistema (*cascading failure*).
+O **Cenário C — Elevado (150 usuários)** apresentou a maior taxa de falhas absoluta:
+- **Perfil 1 (Leitura):** **99.95%** de taxa de falhas.
+- **Perfil 2 (Escrita):** **99.62%** de taxa de falhas.
+- O **Cenário B (80 usuários)** também operou saturado, com mais de **99.7%** de falhas.
+- No **Cenário A (30 usuários)**, as falhas foram de 56.29% (Leitura) e 89.89% (Escrita), causadas principalmente por timeouts de conexão sob enfileiramento antes do descarte generalizado do Gateway.
 
 ---
 
