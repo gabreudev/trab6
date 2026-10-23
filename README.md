@@ -6,9 +6,8 @@
 ---
 
 ## 📹 Vídeo Demonstrativo
-> **Link do Vídeo (YouTube / Google Drive):** `[COLOQUE O LINK DO SEU VÍDEO AQUI]`  
+> **Link do Vídeo (YouTube):** `https://youtu.be/JcvyeC4Chuc`  
 > *(Duração recomendada: entre 4 a 6 minutos, demonstrando a inicialização da aplicação, execução do Locust, monitoramento com Docker Stats e interpretação dos resultados).*  
-> Consulte o arquivo [`ROTEIRO_VIDEO.md`](ROTEIRO_VIDEO.md) para o roteiro detalhado de gravação passo a passo.
 
 ---
 

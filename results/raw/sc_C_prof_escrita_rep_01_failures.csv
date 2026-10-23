@@ -1,5 +1,5 @@
 Method,Name,Error,Occurrences,First Seen,Last Seen
-GET,GET /owners,CatchResponseError('Status 405'),2674,2026-10-22T16:12:00Z,2026-10-22T16:12:19Z
-GET,GET /vets,CatchResponseError('Status 405'),2760,2026-10-22T16:12:00Z,2026-10-22T16:12:19Z
-GET,GET /owners/{id},CatchResponseError('Status 405'),2781,2026-10-22T16:12:00Z,2026-10-22T16:12:19Z
-POST,POST /owners,CatchResponseError('Status 503'),5444,2026-10-22T16:12:00Z,2026-10-22T16:12:19Z
+GET,GET /owners,CatchResponseError('Status 405'),40245,2026-10-23T01:50:03Z,2026-10-23T01:55:02Z
+GET,GET /vets,CatchResponseError('Status 405'),40354,2026-10-23T01:50:03Z,2026-10-23T01:55:02Z
+GET,GET /owners/{id},CatchResponseError('Status 405'),40307,2026-10-23T01:50:03Z,2026-10-23T01:55:02Z
+POST,POST /owners,CatchResponseError('Status 503'),80901,2026-10-23T01:50:03Z,2026-10-23T01:55:02Z

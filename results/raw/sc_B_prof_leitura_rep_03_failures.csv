@@ -1,0 +1,5 @@
+Method,Name,Error,Occurrences,First Seen,Last Seen
+GET,GET /owners,CatchResponseError('Status 405'),43743,2026-10-22T19:23:19Z,2026-10-22T19:28:19Z
+GET,GET /vets,CatchResponseError('Status 405'),14654,2026-10-22T19:23:19Z,2026-10-22T19:28:19Z
+GET,GET /owners/{id},CatchResponseError('Status 405'),33718,2026-10-22T19:23:19Z,2026-10-22T19:28:19Z
+POST,POST /owners,CatchResponseError('Status 503'),4914,2026-10-22T19:23:19Z,2026-10-22T19:28:19Z
