@@ -27,7 +27,8 @@ O objetivo deste trabalho prático é avaliar o desempenho da aplicação **Spri
 
 A aplicação avaliada é a [Spring PetClinic Microservices](https://github.com/spring-petclinic/spring-petclinic-microservices), uma arquitetura de referência baseada no ecossistema Spring Cloud e Spring Boot, composta pelos seguintes componentes:
 
-```mermaid
+```
+mermaid
 graph TD
     Client["Locust Clients (Carga)"] -->|HTTP :8080| GW["API Gateway (Spring Cloud Gateway)"]
     
