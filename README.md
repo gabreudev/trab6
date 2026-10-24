@@ -286,7 +286,6 @@ trab6/
 ├── run_experiments.sh          # Wrapper executável em Bash com opções (--quick, --plots-only)
 ├── generate_plots.py           # Gerador de gráficos em alta resolução e tabelas Markdown
 ├── requirements.txt            # Dependências Python (Locust, Pandas, Matplotlib, Seaborn)
-├── ROTEIRO_VIDEO.md            # Roteiro passo a passo para gravação do vídeo de 4-6 minutos
 ├── README.md                   # Documentação completa, metodologia e análise dos resultados
 └── results/
     ├── aggregated_summary.csv      # Médias e desvios-padrão consolidados por cenário/perfil
